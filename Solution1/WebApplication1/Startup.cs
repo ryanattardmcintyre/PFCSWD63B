@@ -34,6 +34,19 @@ namespace WebApplication1
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddControllersWithViews();
             services.AddRazorPages();
+
+            services.AddAuthentication()
+                   .AddGoogle(options =>
+                   {
+                       IConfigurationSection googleAuthNSection =
+                           Configuration.GetSection("Authentication:Google");
+
+                       options.ClientId = googleAuthNSection["ClientId"];
+                       options.ClientSecret = googleAuthNSection["ClientSecret"];
+                   });
+
+
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
