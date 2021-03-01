@@ -12,6 +12,7 @@ namespace WebApplication1.Domain
         [Key]
         public Guid BlogId { get; set; }
         public string Url { get; set; }
+        public string Title { get; set; }
         public virtual IQueryable<Post> Posts { get; set; }
     }
 }
