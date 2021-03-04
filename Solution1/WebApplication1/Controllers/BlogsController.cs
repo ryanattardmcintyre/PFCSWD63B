@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Google.Cloud.Storage.V1;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using WebApplication1.DataAccess.Interfaces;
 using WebApplication1.DataAccess.Repositories;
 using WebApplication1.Domain;
@@ -14,8 +16,10 @@ namespace WebApplication1.Controllers
     public class BlogsController : Controller
     {
         private readonly IBlogsRepository _blogsRepo;
-        public BlogsController (IBlogsRepository blogsRepo)
+        private readonly IConfiguration _config;
+        public BlogsController (IBlogsRepository blogsRepo, IConfiguration config)
         {
+            _config = config;
             _blogsRepo = blogsRepo;
         }
 
@@ -25,7 +29,6 @@ namespace WebApplication1.Controllers
             return View(_blogsRepo.GetBlogs());
         }
 
-
         public IActionResult Create()
         {
             return View();
@@ -34,22 +37,34 @@ namespace WebApplication1.Controllers
         [HttpPost]
         public IActionResult Create(IFormFile logo, Blog b )
         {
+            try
+            {
+                string bucketName = _config.GetSection("AppSettings").GetSection("PicturesBucket").Value;
 
-            string bucketName = "";
-            
-            //upload logo in cloud storage
-            string filename = Guid.NewGuid() + Path.GetExtension(logo.FileName);
+                //upload logo in cloud storage
+                string filename = Guid.NewGuid() + Path.GetExtension(logo.FileName);
+
+                b.Url = $"https://storage.googleapis.com/{bucketName}/{filename}";
+
+                //uploading the physical in cloud storage bucket
+
+                var storage = StorageClient.Create();
+                using (var fileToUpload = logo.OpenReadStream())
+                {
+                    storage.UploadObject(bucketName, filename, null, fileToUpload);
+                }
+
+                //insert info in db
+                _blogsRepo.InsertBlog(b);
 
 
-
-
-            b.Url = $"https://storage.googleapis.com/{bucketName}/{filename}";
-
-            //insert info in db
-            _blogsRepo.InsertBlog(b);
-
-
-            return View();
+                return RedirectToAction("Index");
+            }
+            catch(Exception ex)
+            {
+                TempData["error"] = "Failed to upload";
+                return View();
+            }
         }
 
         
