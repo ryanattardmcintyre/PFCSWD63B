@@ -45,6 +45,8 @@ namespace WebApplication1.Controllers
                 string filename = Guid.NewGuid() + Path.GetExtension(logo.FileName);
 
                 b.Url = $"https://storage.googleapis.com/{bucketName}/{filename}";
+          
+
 
                 //uploading the physical in cloud storage bucket
 
@@ -67,6 +69,21 @@ namespace WebApplication1.Controllers
             }
         }
 
-        
+        public IActionResult Delete(Guid id)
+        {
+            try
+            {
+                string bucketName = _config.GetSection("AppSettings").GetSection("PicturesBucket").Value;
+                var storage = StorageClient.Create();
+
+                var url = System.IO.Path.GetFileName(_blogsRepo.GetBlog(id).Url);
+
+                storage.DeleteObject(bucketName, url);
+                _blogsRepo.DeleteBlog(id);
+            }
+            catch()
+            { }
+            return RedirectToAction("Index");
+        }
     }
 }
