@@ -37,7 +37,7 @@ namespace WebApplication1
                     Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddScoped<IBlogsRepository, BlogsRepository>();
-
+            services.AddScoped<ICachingService, CachingService>();
 
 
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)

@@ -53,6 +53,7 @@ namespace WebApplication1.Controllers
                 var storage = StorageClient.Create();
                 using (var fileToUpload = logo.OpenReadStream())
                 {
+                 
                     storage.UploadObject(bucketName, filename, null, fileToUpload);
                 }
 
@@ -81,7 +82,7 @@ namespace WebApplication1.Controllers
                 storage.DeleteObject(bucketName, url);
                 _blogsRepo.DeleteBlog(id);
             }
-            catch()
+            catch(Exception ex)
             { }
             return RedirectToAction("Index");
         }
