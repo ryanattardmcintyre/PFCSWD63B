@@ -23,7 +23,7 @@ namespace WebApplication1.DataAccess.Repositories
         }
 
         public void DeleteMenu(string title)
-        {
+        { 
             
             throw new NotImplementedException();
         }
@@ -49,6 +49,7 @@ namespace WebApplication1.DataAccess.Repositories
             {
                 var originalMenu = existentMenus.SingleOrDefault(x => x.Title == m.Title);
                 originalMenu.Url = m.Url;
+                originalMenu.Title = m.Title;
             }
             else
             {
