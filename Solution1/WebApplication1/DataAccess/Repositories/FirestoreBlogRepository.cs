@@ -16,32 +16,76 @@ namespace WebApplication1.DataAccess.Repositories
         FirestoreDb db;
         public FirestoreBlogRepository(IConfiguration config)
         {   _config = config;
-            string projectId = _config.GetSection("ProjectId").Value;
+            string projectId = _config.GetSection("AppSettings").GetSection("ProjectId").Value;
             db = FirestoreDb.Create(projectId);
         }
 
         public void DeleteBlog(Guid id)
         {
-            throw new NotImplementedException();
+
+            CollectionReference citiesRef = db.Collection("blogs");
+            Query query = citiesRef.WhereEqualTo("Id", id.ToString());
+
+            Task<QuerySnapshot> task = query.GetSnapshotAsync();
+            task.Wait();
+            QuerySnapshot allBlogsQuerySnapshot = task.Result;
+            var docRef = allBlogsQuerySnapshot.Documents[0].Reference;
+            docRef.DeleteAsync().Wait();
         }
 
         public Blog GetBlog(Guid id)
         {
-            throw new NotImplementedException();
+            CollectionReference citiesRef = db.Collection("blogs");
+            Query query = citiesRef.WhereEqualTo("Id", id.ToString());
+
+            Task<QuerySnapshot> task = query.GetSnapshotAsync();
+            task.Wait();
+            QuerySnapshot allBlogsQuerySnapshot = task.Result;
+            var docRef = allBlogsQuerySnapshot.Documents[0];
+            
+            Dictionary<string, object> blog = docRef.ToDictionary();
+            Blog b= new Blog()
+            {
+                BlogId = blog.ContainsKey("Id") ? new Guid(blog["Id"].ToString()) : new Guid(),
+                Url = blog.ContainsKey("Url") ? blog["Url"].ToString() : "",
+                Title = blog.ContainsKey("Title") ? blog["Title"].ToString() : ""
+            };
+            return b;
+
         }
 
         public IQueryable<Blog> GetBlogs()
         {
-            throw new NotImplementedException();
+            Query allBlogsQuery = db.Collection("blogs");
+            
+            Task<QuerySnapshot> task = allBlogsQuery.GetSnapshotAsync();
+            task.Wait();
+            QuerySnapshot allBlogsQuerySnapshot =task.Result;
+
+            List<Blog> listOfBlogs = new List<Blog>();
+
+            foreach (DocumentSnapshot documentSnapshot in allBlogsQuerySnapshot.Documents)
+            {
+              //  Console.WriteLine("Document data for {0} document:", documentSnapshot.Id);
+                Dictionary<string, object> blog = documentSnapshot.ToDictionary();
+                listOfBlogs.Add(new Blog()
+                {
+                    BlogId = blog.ContainsKey("Id")? new Guid(blog["Id"].ToString()) : new Guid(),
+                    Url = blog.ContainsKey("Url")? blog["Url"].ToString() : "",
+                    Title = blog.ContainsKey("Title")? blog["Title"].ToString(): ""
+                });  
+            }
+
+            return listOfBlogs.AsQueryable();
         }
 
-        public Guid InsertBlog(Blog b)
+        public  Guid InsertBlog(Blog b)
         {
             var id = Guid.NewGuid();
             DocumentReference docRef = db.Collection("blogs").Document();
             Dictionary<string, object> blog = new Dictionary<string, object>
             {
-                { "Id", id },
+                { "Id", id.ToString() },
                 { "Url", b.Url },
                 { "Title", b.Title }
             };

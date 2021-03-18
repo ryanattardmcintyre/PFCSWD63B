@@ -36,7 +36,7 @@ namespace WebApplication1
                 options.UseNpgsql(
                     Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddScoped<IBlogsRepository, BlogsRepository>();
+            services.AddScoped<IBlogsRepository, FirestoreBlogRepository>();
             services.AddScoped<ICachingService, CachingService>();
 
 

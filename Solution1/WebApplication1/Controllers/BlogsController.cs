@@ -22,8 +22,7 @@ namespace WebApplication1.Controllers
             _config = config;
             _blogsRepo = blogsRepo;
         }
-
-
+        
         public IActionResult Index()
         {
             return View(_blogsRepo.GetBlogs());
