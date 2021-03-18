@@ -17,10 +17,12 @@ namespace WebApplication1.Controllers
     {
         private readonly IBlogsRepository _blogsRepo;
         private readonly IConfiguration _config;
-        public BlogsController (IBlogsRepository blogsRepo, IConfiguration config)
+        private readonly IPubSubRepository _pubSubRepo;
+        public BlogsController (IBlogsRepository blogsRepo, IConfiguration config, IPubSubRepository pubSubRepo)
         {
             _config = config;
             _blogsRepo = blogsRepo;
+            _pubSubRepo = pubSubRepo;
         }
         
         public IActionResult Index()
@@ -59,6 +61,9 @@ namespace WebApplication1.Controllers
                 //insert info in db
                 _blogsRepo.InsertBlog(b);
 
+
+                //sending email as soon as blog is saved in db (instead of a notification)
+                _pubSubRepo.PublishEmail(HttpContext.User.Identity.Name, b);
 
                 return RedirectToAction("Index");
             }

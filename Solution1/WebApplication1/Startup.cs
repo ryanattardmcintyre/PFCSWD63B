@@ -38,7 +38,7 @@ namespace WebApplication1
 
             services.AddScoped<IBlogsRepository, FirestoreBlogRepository>();
             services.AddScoped<ICachingService, CachingService>();
-
+            services.AddScoped<IPubSubRepository, PubSubRepository>();
 
             //services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
             //    .AddEntityFrameworkStores<ApplicationDbContext>();
