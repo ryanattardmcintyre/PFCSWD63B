@@ -31,12 +31,13 @@ namespace WebApplication1.DataAccess.Repositories
             Topic topic = null;
 
             try
-            {
-                topic = publisher.CreateTopic(topicName);
-            }
-            catch (RpcException e) when (e.Status.StatusCode == StatusCode.AlreadyExists)
-            {
+            { 
                 topic = publisher.GetTopic(topicName);
+               
+            }
+            catch (RpcException e) when (e.Status.StatusCode == StatusCode.NotFound)
+            {
+               topic = publisher.CreateTopic(topicName);
             }
             return topic;
         }

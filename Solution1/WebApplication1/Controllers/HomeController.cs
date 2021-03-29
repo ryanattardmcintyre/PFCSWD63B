@@ -22,9 +22,17 @@ namespace WebApplication1.Controllers
 
         public IActionResult Index()
         {
-            _logger.LogInformation("User just accessed index method");
+            try
+            {
+                _logger.LogInformation("User just accessed index method");
 
-
+                //simulate the exception
+                throw new Exception("Simulating an exception");
+            }
+            catch
+            {
+                //you process the error
+            }
             return View();
         }
 

@@ -18,11 +18,13 @@ namespace WebApplication1.Controllers
         private readonly IBlogsRepository _blogsRepo;
         private readonly IConfiguration _config;
         private readonly IPubSubRepository _pubSubRepo;
-        public BlogsController (IBlogsRepository blogsRepo, IConfiguration config, IPubSubRepository pubSubRepo)
+        private readonly ILog _log;
+        public BlogsController (IBlogsRepository blogsRepo, IConfiguration config, IPubSubRepository pubSubRepo, ILog log)
         {
             _config = config;
             _blogsRepo = blogsRepo;
             _pubSubRepo = pubSubRepo;
+            _log = log;
         }
         
         public IActionResult Index()
@@ -58,17 +60,25 @@ namespace WebApplication1.Controllers
                     storage.UploadObject(bucketName, filename, null, fileToUpload);
                 }
 
+                _log.Log("Image uploaded", Google.Cloud.Logging.Type.LogSeverity.Info);
+
                 //insert info in db
                 _blogsRepo.InsertBlog(b);
-
+                
+                _log.Log("Blog inserted in db", Google.Cloud.Logging.Type.LogSeverity.Info);
 
                 //sending email as soon as blog is saved in db (instead of a notification)
                 _pubSubRepo.PublishEmail(HttpContext.User.Identity.Name, b);
+
+                _log.Log("Blog info was published to pub sub", Google.Cloud.Logging.Type.LogSeverity.Info);
+
 
                 return RedirectToAction("Index");
             }
             catch(Exception ex)
             {
+                _log.Log(ex.Message, Google.Cloud.Logging.Type.LogSeverity.Error);
+
                 TempData["error"] = "Failed to upload";
                 return View();
             }
@@ -87,7 +97,11 @@ namespace WebApplication1.Controllers
                 _blogsRepo.DeleteBlog(id);
             }
             catch(Exception ex)
-            { }
+            { 
+            
+            
+            
+            }
             return RedirectToAction("Index");
         }
     }

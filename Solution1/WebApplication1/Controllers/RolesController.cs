@@ -26,8 +26,11 @@ namespace WebApplication1.Controllers
                 if (user != null)
                     await _userManager.AddToRoleAsync(user, role);
             }
+ 
 
-            return View();
+
+
+                return View();
         }
     }
 }

@@ -15,6 +15,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Http;
 using WebApplication1.DataAccess.Interfaces;
 using WebApplication1.DataAccess.Repositories;
+using Google.Cloud.SecretManager.V1;
+using Newtonsoft.Json;
+using Google.Cloud.Diagnostics.AspNetCore;
 
 namespace WebApplication1
 {
@@ -32,6 +35,7 @@ namespace WebApplication1
         {
             //registering an Application Service with a static collection called services which is injected in the runtime pipeline
 
+
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(
                     Configuration.GetConnectionString("DefaultConnection")));
@@ -39,6 +43,8 @@ namespace WebApplication1
             services.AddScoped<IBlogsRepository, FirestoreBlogRepository>();
             services.AddScoped<ICachingService, CachingService>();
             services.AddScoped<IPubSubRepository, PubSubRepository>();
+            services.AddScoped<ILog, LogRepository>();
+
 
             //services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
             //    .AddEntityFrameworkStores<ApplicationDbContext>();
@@ -51,15 +57,39 @@ namespace WebApplication1
             services.AddControllersWithViews();
             services.AddRazorPages();
 
+
+            /*
+             * google client id/ secret key
+             * mailgun api key
+             * connection string (password)
+             * cache password
+             * 
+             */
+
+            string googleClientid = GetPassword("Authentication:Google:ClientId");
+            string password = GetPassword("Authentication:Google:ClientSecret");
+
+
             services.AddAuthentication()
                    .AddGoogle(options =>
                    {
-                       IConfigurationSection googleAuthNSection =
-                           Configuration.GetSection("Authentication:Google");
+                       //   IConfigurationSection googleAuthNSection =
+                       //     Configuration.GetSection("Authentication:Google");
 
-                       options.ClientId = googleAuthNSection["ClientId"];
-                       options.ClientSecret = googleAuthNSection["ClientSecret"];
+                       options.ClientId = GetPassword("Authentication:Google:ClientId"); //googleAuthNSection["ClientId"];
+                       options.ClientSecret = GetPassword("Authentication:Google:ClientSecret");// googleAuthNSection["ClientSecret"];
                    });
+
+
+
+            services.AddGoogleExceptionLogging(options =>
+            {
+                options.ProjectId = "pfc2021";
+                options.ServiceName = "BlogService";
+                options.Version = "0.01";
+            });
+
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -77,6 +107,9 @@ namespace WebApplication1
                 app.UseHsts();
             }
             app.UseHttpsRedirection();
+
+            app.UseGoogleExceptionLogging();
+
             app.UseStaticFiles();
 
             app.UseRouting();
@@ -102,5 +135,28 @@ namespace WebApplication1
                 // Omitted for clarity
             });
         }
+
+
+        public string GetPassword(string key)
+        {
+            SecretManagerServiceClient client = SecretManagerServiceClient.Create();
+
+            // Build the resource name.
+            SecretVersionName secretVersionName = new SecretVersionName("pfc2021", "ApiClientId", "2");
+
+            // Call the API.
+            AccessSecretVersionResponse result = client.AccessSecretVersion(secretVersionName);
+
+            // Convert the payload to a string. Payloads are bytes by default.
+            String payload = result.Payload.Data.ToStringUtf8();
+
+
+            dynamic obj = JsonConvert.DeserializeObject(payload);
+            string value = obj[key];
+
+            return value;
+        }
+
+
     }
 }

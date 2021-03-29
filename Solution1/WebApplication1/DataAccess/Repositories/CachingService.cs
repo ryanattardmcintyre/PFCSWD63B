@@ -19,7 +19,7 @@ namespace WebApplication1.DataAccess.Repositories
             var connectionString = config.GetConnectionString("cachedb");
             var cm = ConnectionMultiplexer.Connect(connectionString);
 
-            db  = cm.GetDatabase();
+            db  = cm.GetDatabase();   
         }
 
         public void DeleteMenu(string title)
