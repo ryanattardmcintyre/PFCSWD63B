@@ -1,26 +1,21 @@
-﻿using Google.Cloud.PubSub.V1;
-using Google.Protobuf;
-using Grpc.Core;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Cloud.PubSub.V1;
+using Grpc.Core;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
-using RestSharp;
-using RestSharp.Authenticators;
-using System.Net.Http;
-
-namespace EmailSender
+namespace WebApplication1.Controllers
 {
-    class Program
+    public class CronController : Controller
     {
-        static void Main(string[] args)
+        public IActionResult Index()
         {
-
-            
-            System.Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", @"C:\Users\Ryan\Downloads\pfc2021-9ec46b4dd7a6.json");
+        //    System.Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", @"C:\Users\Ryan\Downloads\pfc2021-9ec46b4dd7a6.json");
 
             SendEmailViaCloudFunction("ryanattard@gmail.com", "test");
 
@@ -44,16 +39,16 @@ namespace EmailSender
 
                 foreach (ReceivedMessage msg in response.ReceivedMessages)
                 {
-                    text =msg.Message.Data.ToStringUtf8();
+                    text = msg.Message.Data.ToStringUtf8();
                     ackId = msg.AckId;
                     Console.WriteLine($"Message {msg.Message.MessageId}: {text}");
-                    
+
                     Interlocked.Increment(ref messageCount);
                 }
 
                 try
                 {
-                    
+
                     string email = "";
                     string content = "";
 
@@ -61,29 +56,27 @@ namespace EmailSender
                     email = myJsonObject.email;
                     content = myJsonObject.blog.Title;
 
-                    SendSimpleMessage(email, content);
-                    emailSent =true;
+                    SendEmailViaCloudFunction(email, content);
+                    emailSent = true;
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     emailSent = false;
                 }
 
-
+              
                 // If acknowledgement required, send to server.
                 if (acknowledge && messageCount > 0)
                 {
                     subscriberClient.Acknowledge(subscriptionName, response.ReceivedMessages.Select(msg => msg.AckId));
                 }
             }
-            catch (RpcException ex) when (ex.Status.StatusCode == StatusCode.Unavailable)
+            catch (RpcException ex) when (ex.Status.StatusCode ==  Grpc.Core.StatusCode.Unavailable)
             {
                 // UNAVAILABLE due to too many concurrent pull requests pending for the given subscription.
             }
+            return Content("done");
 
-
-            //code to send an email
-  
         }
 
 
@@ -100,32 +93,6 @@ namespace EmailSender
             Console.WriteLine(myResult.Message);
             Console.ReadLine();
 
-        }
-
-        public static IRestResponse SendSimpleMessage(string email, string message)
-        { 
-
-
-
-
-
-
-            //install RestSharp from nuget
-
-            RestClient client = new RestClient();
-            client.BaseUrl = new Uri("https://api.mailgun.net/v3");
-            client.Authenticator =
-                new HttpBasicAuthenticator("api",
-                                            "55906d3a001f54dea7f1c36c35380db1-d32d817f-94c875e0");
-            RestRequest request = new RestRequest();
-          request.AddParameter("domain", "sandbox71aaf3a4083d41fbaf81858054139ab9.mailgun.org", ParameterType.UrlSegment);
-           request.Resource = "{domain}/messages";
-            request.AddParameter("from", "ryanattard83@gmail.com");
-            request.AddParameter("to", email);
-            request.AddParameter("subject", "no-reply pubsub test");
-            request.AddParameter("text", message);
-            request.Method = Method.POST;
-            return client.Execute(request);
         }
 
     }

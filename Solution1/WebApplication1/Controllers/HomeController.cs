@@ -29,9 +29,9 @@ namespace WebApplication1.Controllers
                 //simulate the exception
                 throw new Exception("Simulating an exception");
             }
-            catch
+            catch(Exception ex)
             {
-                //you process the error
+                _logger.LogError(ex.Message);
             }
             return View();
         }

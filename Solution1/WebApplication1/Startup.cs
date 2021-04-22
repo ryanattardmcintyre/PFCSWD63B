@@ -23,8 +23,10 @@ namespace WebApplication1
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostEnvironment host)
         {
+           System.Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS",   host.ContentRootPath + @"\pfc2021-9ec46b4dd7a6.json");
+
             Configuration = configuration;
         }
 
@@ -40,7 +42,7 @@ namespace WebApplication1
                 options.UseNpgsql(
                     Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddScoped<IBlogsRepository, FirestoreBlogRepository>();
+            services.AddScoped<IBlogsRepository, BlogsRepository>();
             services.AddScoped<ICachingService, CachingService>();
             services.AddScoped<IPubSubRepository, PubSubRepository>();
             services.AddScoped<ILog, LogRepository>();
@@ -95,17 +97,10 @@ namespace WebApplication1
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
+           
                 app.UseDeveloperExceptionPage();
                 app.UseDatabaseErrorPage();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
+            
             app.UseHttpsRedirection();
 
             app.UseGoogleExceptionLogging();
